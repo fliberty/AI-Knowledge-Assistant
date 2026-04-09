@@ -1,0 +1,54 @@
+[project]
+name = "ai-knowledge-assistant"
+version = "0.1.0"
+description = "企业级 AI 知识库助手 — 基于 LangGraph + RAG 架构"
+readme = "README.md"
+requires-python = ">=3.11"
+# 1. 修复 License 警告：直接写字符串
+license = "MIT"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+
+dependencies = [
+    "langchain>=0.3.0",
+    "langgraph>=0.2.0",
+    "langchain-openai>=0.2.0",
+    "langchain-community>=0.3.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "qdrant-client>=1.12.0",
+    "langchain-qdrant>=0.1.0",
+    "unstructured[pdf]>=0.16.0",
+    "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.12",
+]
+
+# 2. 显式告知 setuptools 哪些文件夹是 Python 代码包
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]  # 只要安装 app 文件夹下的代码
+# 如果 frontend 也是 Python 代码且需要被 import，可以写成 include = ["app*", "frontend*"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
+    "ruff>=0.8.0",
+]
+
+[build-system]
+requires = ["setuptools>=64.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

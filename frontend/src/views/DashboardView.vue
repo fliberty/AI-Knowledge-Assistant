@@ -1,0 +1,430 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useApi } from '../composables/useApi.js'
+
+const { healthCheck } = useApi()
+const systemStatus = ref('checking')
+const statusText = ref('正在检查...')
+
+onMounted(async () => {
+  try {
+    await healthCheck()
+    systemStatus.value = 'online'
+    statusText.value = '运行中'
+  } catch {
+    systemStatus.value = 'offline'
+    statusText.value = '未连接'
+  }
+})
+
+const techStack = [
+  { name: 'FastAPI', desc: 'Web 框架', color: 'cyan', version: '0.115+' },
+  { name: 'LangChain', desc: 'LLM 编排', color: 'indigo', version: '0.3+' },
+  { name: 'LangGraph', desc: '工作流引擎', color: 'indigo', version: '0.2+' },
+  { name: 'OpenAI', desc: 'GPT-4o / Embedding', color: 'green', version: 'Latest' },
+  { name: 'Qdrant', desc: '向量数据库', color: 'rose', version: '1.12+' },
+  { name: 'Pydantic', desc: '数据校验', color: 'amber', version: 'v2' },
+]
+
+const apiEndpoints = [
+  { method: 'GET', path: '/health', desc: '健康检查' },
+  { method: 'POST', path: '/api/v1/knowledge/upload', desc: '上传知识文档' },
+  { method: 'POST', path: '/api/v1/knowledge/search', desc: '语义搜索' },
+  { method: 'POST', path: '/api/v1/chat', desc: '知识库问答' },
+]
+
+const architectureLayers = [
+  { name: 'API Layer', desc: 'FastAPI 路由 + 依赖注入', icon: '⟶', modules: ['router.py', 'deps.py', 'endpoints/'] },
+  { name: 'Agent Layer', desc: 'LangGraph RAG 工作流', icon: '⟶', modules: ['rag_agent.py', 'graph.py'] },
+  { name: 'Service Layer', desc: 'Qdrant + LLM 封装', icon: '⟶', modules: ['vector_store.py', 'llm.py'] },
+  { name: 'Data Processing', desc: '文档加载 & 分块', icon: '⟶', modules: ['loader.py', 'chunker.py'] },
+  { name: 'Core', desc: '配置管理 + 结构化日志', icon: '◉', modules: ['config.py', 'logging.py'] },
+]
+</script>
+
+<template>
+  <div class="dashboard">
+    <!-- 页面标题 -->
+    <header class="dashboard__header animate-fade-in-up">
+      <div>
+        <h1 class="dashboard__title">
+          <span class="gradient-text">AI Knowledge Assistant</span>
+        </h1>
+        <p class="dashboard__subtitle text-muted">
+          企业级知识库智能助手 — 基于 LangGraph + RAG 架构
+        </p>
+      </div>
+      <div class="dashboard__status-card glass-card" :class="`status--${systemStatus}`">
+        <span class="status-dot" :class="`dot--${systemStatus}`"></span>
+        <span class="font-mono text-sm">{{ statusText }}</span>
+      </div>
+    </header>
+
+    <!-- 架构概览 -->
+    <section class="animate-fade-in-up stagger-1">
+      <h2 class="section-title">系统架构</h2>
+      <div class="architecture">
+        <div
+          v-for="(layer, i) in architectureLayers"
+          :key="layer.name"
+          class="arch-layer glass-card"
+        >
+          <div class="arch-layer__header">
+            <span class="arch-layer__name font-mono">{{ layer.name }}</span>
+            <span class="arch-layer__arrow" v-if="i < architectureLayers.length - 1">↓</span>
+          </div>
+          <p class="arch-layer__desc text-muted text-sm">{{ layer.desc }}</p>
+          <div class="arch-layer__modules">
+            <code v-for="mod in layer.modules" :key="mod" class="arch-module">{{ mod }}</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 技术栈 -->
+    <section class="animate-fade-in-up stagger-2">
+      <h2 class="section-title">技术栈</h2>
+      <div class="tech-grid">
+        <div v-for="tech in techStack" :key="tech.name" class="tech-card glass-card">
+          <div class="tech-card__top">
+            <span class="tech-card__name font-mono">{{ tech.name }}</span>
+            <span :class="`badge badge--${tech.color}`">{{ tech.version }}</span>
+          </div>
+          <p class="tech-card__desc text-muted text-sm">{{ tech.desc }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- API 端点 -->
+    <section class="animate-fade-in-up stagger-3">
+      <h2 class="section-title">API 端点</h2>
+      <div class="api-table glass-card">
+        <div class="api-row api-row--header">
+          <span class="api-col api-col--method">方法</span>
+          <span class="api-col api-col--path">路径</span>
+          <span class="api-col api-col--desc">说明</span>
+        </div>
+        <div v-for="ep in apiEndpoints" :key="ep.path" class="api-row">
+          <span class="api-col api-col--method">
+            <span :class="['method-badge', `method--${ep.method.toLowerCase()}`]">{{ ep.method }}</span>
+          </span>
+          <code class="api-col api-col--path font-mono text-sm">{{ ep.path }}</code>
+          <span class="api-col api-col--desc text-muted text-sm">{{ ep.desc }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RAG 工作流 -->
+    <section class="animate-fade-in-up stagger-4">
+      <h2 class="section-title">RAG 工作流</h2>
+      <div class="workflow glass-card">
+        <div class="workflow__nodes">
+          <div class="workflow__node workflow__node--start">
+            <span class="workflow__node-label font-mono">Query</span>
+          </div>
+          <span class="workflow__arrow">→</span>
+          <div class="workflow__node workflow__node--process">
+            <span class="workflow__node-label font-mono">Retrieve</span>
+            <span class="text-xs text-muted">向量检索</span>
+          </div>
+          <span class="workflow__arrow">→</span>
+          <div class="workflow__node workflow__node--process">
+            <span class="workflow__node-label font-mono">Grade</span>
+            <span class="text-xs text-muted">相关性评估</span>
+          </div>
+          <span class="workflow__arrow">→</span>
+          <div class="workflow__node workflow__node--decision">
+            <span class="workflow__node-label font-mono">Retry?</span>
+            <span class="text-xs text-muted">条件判断</span>
+          </div>
+          <span class="workflow__arrow">→</span>
+          <div class="workflow__node workflow__node--end">
+            <span class="workflow__node-label font-mono">Generate</span>
+            <span class="text-xs text-muted">生成回答</span>
+          </div>
+        </div>
+        <div class="workflow__retry-line">
+          <span class="text-xs font-mono text-muted">↻ 重试路径 (retry_count &lt; max_retries)</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
+
+<style scoped>
+.dashboard {
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.dashboard__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-10);
+}
+
+.dashboard__title {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  line-height: 1.2;
+  margin-bottom: var(--space-2);
+}
+
+.dashboard__subtitle {
+  font-size: var(--text-base);
+}
+
+.dashboard__status-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot--online {
+  background: var(--color-accent-green);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.dot--offline {
+  background: var(--color-accent-rose);
+}
+
+.dot--checking {
+  background: var(--color-accent-amber);
+  animation: pulse-glow 1s ease-in-out infinite;
+}
+
+.status--online { border-color: rgba(16, 185, 129, 0.3); }
+.status--offline { border-color: rgba(244, 63, 94, 0.3); }
+
+/* ── Section ── */
+.section-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+  color: var(--color-text-primary);
+}
+
+section {
+  margin-bottom: var(--space-10);
+}
+
+/* ── Architecture ── */
+.architecture {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.arch-layer {
+  padding: var(--space-4) var(--space-5);
+}
+
+.arch-layer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.arch-layer__name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-accent-primary);
+}
+
+.arch-layer__arrow {
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+}
+
+.arch-layer__modules {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.arch-module {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-sm);
+  color: #A5B4FC;
+  font-family: var(--font-mono);
+}
+
+/* ── Tech Grid ── */
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.tech-card {
+  padding: var(--space-5);
+}
+
+.tech-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.tech-card__name {
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+/* ── API Table ── */
+.api-table {
+  padding: 0;
+  overflow: hidden;
+}
+
+.api-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 1fr;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+}
+
+.api-row:last-child {
+  border-bottom: none;
+}
+
+.api-row--header {
+  background: rgba(99, 102, 241, 0.06);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.method-badge {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.method--get {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+}
+
+.method--post {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818CF8;
+}
+
+/* ── Workflow ── */
+.workflow {
+  padding: var(--space-6);
+}
+
+.workflow__nodes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.workflow__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  min-width: 100px;
+  text-align: center;
+}
+
+.workflow__node--start {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.workflow__node--process {
+  background: rgba(6, 182, 212, 0.08);
+  border-color: rgba(6, 182, 212, 0.25);
+}
+
+.workflow__node--decision {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25);
+  border-radius: var(--radius-sm);
+  transform: rotate(0deg);
+}
+
+.workflow__node--end {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.workflow__node-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.workflow__arrow {
+  color: var(--color-text-muted);
+  font-size: var(--text-xl);
+  font-family: var(--font-mono);
+}
+
+.workflow__retry-line {
+  text-align: center;
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px dashed rgba(245, 158, 11, 0.2);
+}
+
+/* ── 响应式 ── */
+@media (max-width: 768px) {
+  .tech-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard__header {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .api-row {
+    grid-template-columns: 60px 1fr;
+  }
+
+  .api-col--desc {
+    display: none;
+  }
+
+  .workflow__nodes {
+    flex-direction: column;
+  }
+
+  .workflow__arrow {
+    transform: rotate(90deg);
+  }
+}
+</style>
