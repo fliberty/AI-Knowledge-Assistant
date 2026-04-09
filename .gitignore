@@ -36,3 +36,4 @@ logs/
 data/uploads/
 *.pdf
 *.docx
+*.db

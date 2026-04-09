@@ -48,6 +48,43 @@ GENERATOR_PROMPT = ChatPromptTemplate.from_messages(
     ]
 )
 
+ROUTER_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "你是一个智能路由专家。分析用户查询，判断是否需要从外部知识库检索相关信息。\n"
+            "如果用户的意图是日常问候（如：你好、谢谢）、基础认知交流、或是指代上一轮对话等，不需要查询专门的文档，请回答 'generate'。\n"
+            "如果是询问特定的概念、技术细节、规范、或需要特定知识才能回答的专业问题，请回答 'retrieve'。\n"
+            "仅返回 'generate' 或 'retrieve'，不包含其他任何字符。",
+        ),
+        ("human", "{query}"),
+    ]
+)
+
+
+# ──────────────────────────────────────────────
+# 节点函数
+# ──────────────────────────────────────────────
+
+async def route_query(state: AgentState, *, llm) -> str:
+    """
+    条件边路由：判断是否需要执行知识库检索。
+    """
+    query = state["query"]
+    logger.info("执行意图分析: query='%s'", query)
+    
+    chain = ROUTER_PROMPT | llm | StrOutputParser()
+    result = await chain.ainvoke({"query": query})
+    route = result.strip().lower()
+    
+    if "retrieve" in route:
+        logger.info("👉 意图分析结果: 需要查库 (retrieve)")
+        return "retrieve"
+        
+    logger.info("👉 意图分析结果: 无需查库直接生成 (generate)")
+    return "generate"
+
+
 
 # ──────────────────────────────────────────────
 # 节点函数
@@ -149,7 +186,10 @@ async def generate(state: AgentState, *, llm) -> dict:
         context = "（未找到相关文档）"
 
     chain = GENERATOR_PROMPT | llm | StrOutputParser()
-    generation = await chain.ainvoke({"context": context, "query": query})
+    generation = await chain.ainvoke(
+        {"context": context, "query": query},
+        config={"tags": ["final_node"]}
+    )
 
     return {
         "generation": generation,

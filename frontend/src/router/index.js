@@ -14,7 +14,7 @@ const routes = [
     meta: { title: '知识库管理', icon: 'database' },
   },
   {
-    path: '/chat',
+    path: '/chat/:id?',
     name: 'Chat',
     component: () => import('../views/ChatView.vue'),
     meta: { title: 'AI 对话', icon: 'message' },

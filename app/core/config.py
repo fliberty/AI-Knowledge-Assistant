@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = Field(default=20)
     max_chat_history_messages: int = Field(default=8)
 
+    database_url: str = Field(default="sqlite+aiosqlite:///./data/chat_history.db")
+
 
 @lru_cache
 def get_settings() -> Settings:

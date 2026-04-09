@@ -20,6 +20,7 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.services.vector_store import QdrantService
+from app.db.session import init_db
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     setup_logging()
     settings = get_settings()
     logger.info("[STARTUP] 正在启动 %s v%s", settings.app_name, settings.app_version)
+
+    # 初始化数据库建表
+    try:
+        await init_db()
+        logger.info("[OK] 数据库表结构同步完成")
+    except Exception as e:
+        logger.error("[FAIL] 数据库初始化失败: %s", e)
 
     qdrant_service = None
     try:

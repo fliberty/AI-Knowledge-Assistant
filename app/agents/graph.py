@@ -14,7 +14,7 @@ from functools import partial
 
 from langgraph.graph import END, StateGraph
 
-from app.agents.rag_agent import generate, grade_documents, retrieve, should_retry
+from app.agents.rag_agent import generate, grade_documents, retrieve, should_retry, route_query
 from app.schemas.agent_state import AgentState
 from app.services.llm import get_chat_model
 from app.services.vector_store import QdrantService
@@ -50,8 +50,15 @@ def build_rag_graph(settings: Settings, qdrant_service: QdrantService) -> StateG
     workflow.add_node("grade_documents", grade_node)
     workflow.add_node("generate", generate_node)
 
-    # 设置入口
-    workflow.set_entry_point("retrieve")
+    # 设置基于意图分析的条件入口
+    route_node_logic = partial(route_query, llm=llm)
+    workflow.set_conditional_entry_point(
+        route_node_logic,
+        {
+            "retrieve": "retrieve",
+            "generate": "generate",
+        },
+    )
 
     # 添加边
     workflow.add_edge("retrieve", "grade_documents")

@@ -22,6 +22,8 @@ dependencies = [
     "unstructured[pdf]>=0.16.0",
     "python-dotenv>=1.0.0",
     "python-multipart>=0.0.12",
+    "sqlmodel>=0.0.16",
+    "aiosqlite>=0.20.0",
 ]
 
 # 2. 显式告知 setuptools 哪些文件夹是 Python 代码包
